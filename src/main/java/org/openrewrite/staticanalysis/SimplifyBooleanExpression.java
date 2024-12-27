@@ -56,24 +56,15 @@ public class SimplifyBooleanExpression extends Recipe {
 
             @Override
             public @Nullable J visit(@Nullable Tree tree, ExecutionContext ctx) {
-                // NOTE: This method is required here for the `TreeVisitorAdapter` to work
-                return super.visit(tree, ctx);
+                return super.visit(tree, ctx); // NOTE: This method is required here for the `TreeVisitorAdapter` to work
             }
 
             // Comparing Kotlin nullable type `?` with true/false can not be simplified,
             // e.g. `X?.fun() == true` is not equivalent to `X?.fun()`
             @Override
             protected boolean shouldSimplifyEqualsOn(@Nullable J j) {
-                if (j == null) {
-                    return true;
-                }
-
-                if (j instanceof J.MethodInvocation) {
-                    J.MethodInvocation m = (J.MethodInvocation) j;
-                    return !m.getMarkers().findFirst(IsNullSafe.class).isPresent();
-                }
-
-                return true;
+                return !(j instanceof J.MethodInvocation)
+                        || !j.getMarkers().findFirst(IsNullSafe.class).isPresent();
             }
         };
     }
