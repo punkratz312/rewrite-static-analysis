@@ -69,15 +69,19 @@ public class EqualsAvoidsNull extends Recipe {
         return ofMinutes(10);
     }
 
+    private static final String JAVA_LANG_STRING = "java.lang.String";
+    private static final String JAVA_LANG_OBJECT = "java.lang.Object";
+
     @Override
     public TreeVisitor<?, ExecutionContext> getVisitor() {
         return Preconditions.check(
                 Preconditions.or(
-                        new UsesMethod<>("java.lang.String compareTo(..)"),
-                        new UsesMethod<>("java.lang.String compareToIgnoreCase(..)"),
-                        new UsesMethod<>("java.lang.String contentEquals(..)"),
-                        new UsesMethod<>("java.lang.String equals(..)"),
-                        new UsesMethod<>("java.lang.String equalsIgnoreCase(..)")),
+                        new UsesMethod<>(JAVA_LANG_STRING + " compareTo(..)"),
+                        new UsesMethod<>(JAVA_LANG_STRING + " compareToIgnoreCase(..)"),
+                        new UsesMethod<>(JAVA_LANG_STRING + " contentEquals(..)"),
+                        new UsesMethod<>(JAVA_LANG_STRING + " equals(..)"),
+                        new UsesMethod<>(JAVA_LANG_OBJECT + " equals(..)"),
+                        new UsesMethod<>(JAVA_LANG_STRING + " equalsIgnoreCase(..)")),
                 new JavaIsoVisitor<ExecutionContext>() {
                     @Override
                     public J visit(@Nullable Tree tree, ExecutionContext ctx) {
@@ -114,15 +118,20 @@ public class EqualsAvoidsNull extends Recipe {
 @EqualsAndHashCode(callSuper = false)
 class EqualsAvoidsNullVisitor<P> extends JavaVisitor<P> {
 
-    private static final String JAVA_LANG_STRING = "java.lang.String ";
-    private static final MethodMatcher EQUALS = new MethodMatcher(JAVA_LANG_STRING + "equals(java.lang.Object)");
-    private static final MethodMatcher EQUALS_IGNORE_CASE = new MethodMatcher(JAVA_LANG_STRING + "equalsIgnoreCase" +
-            "(java.lang.String)");
-    private static final MethodMatcher COMPARE_TO = new MethodMatcher(JAVA_LANG_STRING + "compareTo(java.lang.String)");
+    private static final String JAVA_LANG_STRING = "java.lang.String";
+    private static final String JAVA_LANG_OBJECT = "java.lang.Object";
+    private static final MethodMatcher EQUALS_STRING = new MethodMatcher(JAVA_LANG_STRING
+            + " equals(" + JAVA_LANG_OBJECT + ")");
+    private static final MethodMatcher EQUALS_OBJECT = new MethodMatcher(JAVA_LANG_OBJECT
+            + " equals(" + JAVA_LANG_OBJECT + ")");
+    private static final MethodMatcher EQUALS_IGNORE_CASE = new MethodMatcher(JAVA_LANG_STRING
+            + " equalsIgnoreCase(" + JAVA_LANG_STRING + ")");
+    private static final MethodMatcher COMPARE_TO = new MethodMatcher(JAVA_LANG_STRING
+            + " compareTo(java.lang.String)");
     private static final MethodMatcher COMPARE_TO_IGNORE_CASE = new MethodMatcher(JAVA_LANG_STRING +
-            "compareToIgnoreCase(java.lang.String)");
-    private static final MethodMatcher CONTENT_EQUALS = new MethodMatcher(JAVA_LANG_STRING + "contentEquals(java.lang" +
-            ".CharSequence)");
+            " compareToIgnoreCase(" + JAVA_LANG_STRING + ")");
+    private static final MethodMatcher CONTENT_EQUALS = new MethodMatcher(JAVA_LANG_STRING
+            + " contentEquals(java.lang.CharSequence)");
 
     EqualsAvoidsNullStyle style;
 
@@ -162,8 +171,9 @@ class EqualsAvoidsNullVisitor<P> extends JavaVisitor<P> {
     }
 
     private boolean isStringComparisonMethod(J.MethodInvocation methodInvocation) {
-        return EQUALS.matches(methodInvocation) ||
-                (!style.getIgnoreEqualsIgnoreCase() && EQUALS_IGNORE_CASE.matches(methodInvocation)) ||
+        return EQUALS_OBJECT.matches(methodInvocation) ||
+                EQUALS_STRING.matches(methodInvocation) ||
+                !style.getIgnoreEqualsIgnoreCase() && EQUALS_IGNORE_CASE.matches(methodInvocation) ||
                 CONTENT_EQUALS.matches(methodInvocation) ||
                 COMPARE_TO.matches(methodInvocation) ||
                 COMPARE_TO_IGNORE_CASE.matches(methodInvocation);
